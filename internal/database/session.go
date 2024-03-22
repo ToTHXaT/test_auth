@@ -96,6 +96,9 @@ func GetRefreshTokenInfo(userId string, refreshToken string) (*RefreshTokenInfo,
 	users := db.Database("authService").Collection("users")
 
 	token, err := getHashedToken(userId, refreshToken)
+	if err != nil {
+		return nil, err
+	}
 
 	var res struct {
 		Sessions []RefreshTokenInfo `json:"sessions"`
