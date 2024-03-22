@@ -4,20 +4,21 @@ import (
 	"encoding/base64"
 	"github.com/ToTHXaT/test_auth/internal/tokens"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"time"
 )
 
 func Login(c *gin.Context) {
 	userData := tokens.UserData{}
 	if err := c.BindJSON(&userData); err != nil {
-		c.JSON(400, gin.H{"error": err})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
 	}
 
 	allTokens, err := tokens.NewTokens(&userData)
 
 	if err != nil {
-		c.JSON(400, gin.H{"error": err})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
@@ -26,21 +27,21 @@ func Login(c *gin.Context) {
 	c.SetCookie("access_token", allTokens.AccessToken, int(allTokens.AccessTokenDuration.Seconds()), "/", "localhost", true, true)
 	c.SetCookie("refresh_token", base64RefreshToken, int(allTokens.RefreshTokenDuration.Seconds()), "/refresh", "localhost", true, true)
 
-	c.JSON(200, gin.H{"success": true})
+	c.JSON(http.StatusCreated, gin.H{"success": true})
 
 }
 
 func Refresh(c *gin.Context) {
 	refreshToken, err := c.Cookie("refresh_token")
 	if err != nil {
-		c.JSON(401, gin.H{
+		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "no refresh token present",
 		})
 		return
 	}
 	accessToken, err := c.Cookie("access_token")
 	if err != nil {
-		c.JSON(401, gin.H{
+		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "no access token present",
 		})
 		return
@@ -48,7 +49,7 @@ func Refresh(c *gin.Context) {
 
 	accessTokenInfo, err := tokens.GetDataFromAccessToken(accessToken)
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
@@ -56,7 +57,7 @@ func Refresh(c *gin.Context) {
 
 	rawRefreshToken, err := base64.StdEncoding.DecodeString(refreshToken)
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
@@ -65,19 +66,19 @@ func Refresh(c *gin.Context) {
 
 	refreshTokenInfo, err := tokens.GetDataFromRefreshToken(accessTokenInfo.UserId, refreshToken)
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 	if accessTokenInfo.IssuedAt.Equal(refreshTokenInfo.Issued) {
-		c.JSON(401, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "access token and refresh token do not match",
 		})
 		return
 	}
 	if time.Now().After(refreshTokenInfo.Expires) {
-		c.JSON(401, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "refresh token has expired",
 		})
 		return
@@ -85,7 +86,7 @@ func Refresh(c *gin.Context) {
 
 	allTokens, err := tokens.NewTokensWithRefresh(&tokens.UserData{UserId: accessTokenInfo.UserId}, refreshTokenInfo.RefreshToken)
 	if err != nil {
-		c.JSON(400, gin.H{"error": err})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
 	}
 
@@ -94,5 +95,5 @@ func Refresh(c *gin.Context) {
 	c.SetCookie("access_token", allTokens.AccessToken, int(allTokens.AccessTokenDuration.Seconds()), "/", "localhost", true, true)
 	c.SetCookie("refresh_token", base64RefreshToken, int(allTokens.RefreshTokenDuration.Seconds()), "/refresh", "localhost", true, true)
 
-	c.JSON(200, gin.H{"success": true})
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }
