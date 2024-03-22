@@ -2,6 +2,7 @@ package tokens
 
 import (
 	"errors"
+	"github.com/ToTHXaT/test_auth/config"
 	"github.com/golang-jwt/jwt"
 	"log"
 	"time"
@@ -31,7 +32,7 @@ func createAccessToken(u *UserData, issuedAt, expiresAt time.Time) string {
 		UserId: u.UserId,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, &claims)
-	tokenString, err := token.SignedString([]byte("1234"))
+	tokenString, err := token.SignedString([]byte(config.Config.SecretKey))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,7 +43,7 @@ func createAccessToken(u *UserData, issuedAt, expiresAt time.Time) string {
 func GetDataFromAccessToken(accessToken string) (*AccessTokenData, error) {
 	claims := &UserClaims{}
 	token, err := jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte("1234"), nil
+		return []byte(config.Config.SecretKey), nil
 	})
 
 	if err != nil {

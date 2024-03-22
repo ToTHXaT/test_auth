@@ -11,6 +11,7 @@ type TomlConfig struct {
 	MongoDBURI                 string `toml:"mongodb_uri"`
 	AccessTokenLifetimeMinutes int    `toml:"access_token_lifetime_minutes"`
 	RefreshTokenLifetimeDays   int    `toml:"refresh_token_lifetime_days"`
+	SecretKey                  string `toml:"secret_key"`
 }
 
 var Config *TomlConfig

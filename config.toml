@@ -1,3 +1,4 @@
 mongodb_uri = "mongodb://dev:dev@localhost/authService?authSource=admin"
 access_token_lifetime_minutes = 30
 refresh_token_lifetime_days=30
+secret_key="2ef57c428b144a808c2c2c377145cc67"
